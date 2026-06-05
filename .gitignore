@@ -1,0 +1,6 @@
+config.yaml
+*.exe
+__pycache__/
+*.pyc
+.venv/
+venv/

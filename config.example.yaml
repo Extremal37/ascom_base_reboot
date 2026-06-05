@@ -1,0 +1,20 @@
+# Pause between rebooting each base (seconds).
+# After base #1 reboots, wait this long before rebooting base #2, and so on.
+interval_seconds: 120
+
+default_username: admin
+default_port: 8023
+
+bases:
+  - name: base-1
+    host: 192.168.1.10
+    password: "change-me"
+
+  - name: base-2
+    host: 192.168.1.11
+    password: "change-me"
+
+  # Full URL is also supported:
+  # - name: base-local
+  #   url: https://localhost:8023
+  #   password: "change-me"
