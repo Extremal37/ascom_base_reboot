@@ -1,37 +1,44 @@
 """Load reboot configuration from YAML."""
 
-from __future__ import annotations
-
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
+import io
+import os
 
 import yaml
 
 
-@dataclass(frozen=True)
-class BaseStation:
-    url: str
-    password: str
-    username: str = "admin"
-    name: str = ""
+class BaseStation(object):
+    __slots__ = ("url", "password", "username", "name")
+
+    def __init__(self, url, password, username="admin", name=""):
+        self.url = url
+        self.password = password
+        self.username = username
+        self.name = name
 
 
-@dataclass(frozen=True)
-class AppConfig:
-    interval_seconds: int
-    bases: list[BaseStation]
-    default_username: str = "admin"
-    default_port: int = 8023
+class AppConfig(object):
+    __slots__ = ("interval_seconds", "bases", "default_username", "default_port")
+
+    def __init__(
+        self,
+        interval_seconds,
+        bases,
+        default_username="admin",
+        default_port=8023,
+    ):
+        self.interval_seconds = interval_seconds
+        self.bases = bases
+        self.default_username = default_username
+        self.default_port = default_port
 
 
-def _require_mapping(data: Any, path: str) -> dict[str, Any]:
+def _require_mapping(data, path):
     if not isinstance(data, dict):
-        raise ValueError(f"{path}: expected mapping")
+        raise ValueError("{0}: expected mapping".format(path))
     return data
 
 
-def _resolve_base_url(entry: dict[str, Any], defaults: AppConfig) -> str:
+def _resolve_base_url(entry, defaults):
     if "url" in entry:
         url = str(entry["url"]).strip()
         if not url:
@@ -45,27 +52,28 @@ def _resolve_base_url(entry: dict[str, Any], defaults: AppConfig) -> str:
     port = entry.get("port", defaults.default_port)
     try:
         port = int(port)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"base entry: invalid port {port!r}") from exc
+    except (TypeError, ValueError):
+        raise ValueError("base entry: invalid port {0!r}".format(port))
 
     if host.startswith("http://") or host.startswith("https://"):
         return host
-    return f"https://{host}:{port}"
+    return "https://{0}:{1}".format(host, port)
 
 
-def load_config(path: str | Path) -> AppConfig:
-    config_path = Path(path)
-    if not config_path.is_file():
-        raise FileNotFoundError(f"config not found: {config_path}")
+def load_config(path):
+    config_path = os.path.abspath(path)
+    if not os.path.isfile(config_path):
+        raise IOError("config not found: {0}".format(config_path))
 
-    raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    with io.open(config_path, "r", encoding="utf-8") as handle:
+        raw = yaml.safe_load(handle)
     data = _require_mapping(raw, "root")
 
     interval = data.get("interval_seconds", 0)
     try:
         interval_seconds = int(interval)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"interval_seconds: invalid value {interval!r}") from exc
+    except (TypeError, ValueError):
+        raise ValueError("interval_seconds: invalid value {0!r}".format(interval))
     if interval_seconds < 0:
         raise ValueError("interval_seconds must be >= 0")
 
@@ -83,12 +91,12 @@ def load_config(path: str | Path) -> AppConfig:
     if not isinstance(bases_raw, list) or not bases_raw:
         raise ValueError("bases: at least one base station is required")
 
-    bases: list[BaseStation] = []
+    bases = []
     for index, entry in enumerate(bases_raw, start=1):
-        item = _require_mapping(entry, f"bases[{index}]")
+        item = _require_mapping(entry, "bases[{0}]".format(index))
         password = str(item.get("password", "")).strip()
         if not password:
-            raise ValueError(f"bases[{index}]: password is required")
+            raise ValueError("bases[{0}]: password is required".format(index))
 
         username = str(item.get("username", default_username)).strip() or default_username
         name = str(item.get("name", "")).strip()

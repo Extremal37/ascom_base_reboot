@@ -70,7 +70,7 @@ def main() -> int:
 
     try:
         config = load_config(args.config)
-    except (FileNotFoundError, ValueError) as exc:
+    except (IOError, ValueError) as exc:
         log.error("%s", exc)
         return 1
 

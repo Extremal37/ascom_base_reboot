@@ -4,10 +4,21 @@ Python-скрипт для последовательной перезагруз
 
 ## Установка
 
+Требуется Python 3.6+ (CentOS 7: `python3 --version`).
+
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 cp config.example.yaml config.yaml
 ```
+
+На CentOS 7, если `pip3 install` не находит новые версии пакетов, сначала обновите pip:
+
+```bash
+pip3 install --upgrade 'pip<21' 'setuptools<50' wheel
+pip3 install -r requirements.txt
+```
+
+Или установите зависимости из EPEL/SCL Python 3.8+.
 
 Отредактируйте `config.yaml`: список баз, пароли и интервал между перезагрузками.
 
